@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin Antrian</title>
+<style>
+  body{font-family:system-ui;background:#f5f5f5;margin:0;padding:16px}
+  .card{background:#fff;border-radius:12px;padding:16px;margin:10px 0;box-shadow:0 2px 6px #0001}
+  input,select{padding:10px;margin:4px 0;width:100%;box-sizing:border-box;border:1px solid #ccc;border-radius:6px}
+  .btn{padding:12px 20px;border:none;border-radius:8px;background:#2563eb;color:#fff;font-weight:bold;cursor:pointer;margin:4px}
+  .btn-green{background:#059669} .btn-red{background:#dc2626}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+  .row{display:flex;gap:8px;margin:6px 0} .row > *{flex:1}
+</style>
+</head>
+<body>
+<h2>🛠️ Admin Antrian</h2>
+<div id="loginBox" class="card" style="max-width:400px;margin:auto">
+  <h3>Login Admin</h3>
+  <input id="user" placeholder="Username" value="admin">
+  <input id="pass" type="password" placeholder="Password" value="admin123">
+  <button class="btn" onclick="login()">Masuk</button>
+</div>
+<div id="dash" style="display:none">
+  <div class="grid" id="layananGrid"></div>
+  <div class="card">
+    <h3>📱 QR Code Nasabah</h3>
+    <p>Isi URL aplikasi Anda (URL Glitch/Render):</p>
+    <input id="urlQR" value="" onchange="loadQR()">
+    <div id="qrBox" style="text-align:center;margin-top:12px"></div>
+  </div>
+  <div class="card"><button class="btn btn-red" onclick="logout()">Logout</button></div>
+</div>
+<script>
+document.getElementById('urlQR').value = location.origin + '/';
+async function login(){
+  const r = await fetch('/api/admin/login', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({user: document.getElementById('user').value, pass: document.getElementById('pass').value})});
+  if (r.ok){ document.getElementById('loginBox').style.display='none'; loadDashboard(); }
+  else alert('Login gagal');
+}
+async function logout(){ await fetch('/api/admin/logout', {method:'POST'}); location.reload(); }
+async function loadDashboard(){
+  document.getElementById('dash').style.display = 'block';
+  const r = await fetch('/api/admin/layanan'); const list = await r.json();
+  const grid = document.getElementById('layananGrid'); grid.innerHTML = '';
+  const hariLabel = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+  list.forEach(l => {
+    const card = document.createElement('div'); card.className = 'card';
+    const aktifHari = l.hari_aktif.map(String);
+    card.innerHTML = `
+      <h3>Antrian ${l.kode}</h3>
+      <label>Nama Layanan:</label>
+      <input id="nama_${l.kode}" value="${l.nama}">
+      <div class="row">
+        <div><label>Jam Buka:</label><input type="time" id="buka_${l.kode}" value="${l.jam_buka}"></div>
+        <div><label>Jam Tutup:</label><input type="time" id="tutup_${l.kode}" value="${l.jam_tutup}"></div>
+      </div>
+      <label>Hari Aktif:</label>
+      <div class="row" style="flex-wrap:wrap">
+        ${hariLabel.map((h,i)=>`<label style="flex:0 0 30%;font-size:13px">
+          <input type="checkbox" id="hari_${l.kode}_${i}" ${aktifHari.includes(String(i))?'checked':''} style="width:auto"> ${h}</label>`).join('')}
+      </div>
+      <label style="display:block;margin:6px 0"><input type="checkbox" id="aktif_${l.kode}" ${l.aktif?'checked':''} style="width:auto"> Aktif</label>
+      <button class="btn" onclick="simpan('${l.kode}')">💾 Simpan</button>
+      <button class="btn btn-green" onclick="panggil('${l.kode}')">📢 Panggil</button>
+      <button class="btn" onclick="panggilUlang('${l.kode}')">🔁 Ulang</button>
+      <button class="btn btn-red" onclick="bersihkan('${l.kode}')">🧹 Hanguskan</button>`;
+    grid.appendChild(card);
+  });
+  loadQR();
+}
+async function simpan(kode){
+  const hari = [];
+  for (let i=0;i<7;i++) if (document.getElementById(hari_${kode}_${i}).checked) hari.push(i);
+  await fetch(/api/admin/layanan/${kode}, {method:'PUT', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      nama: document.getElementById(nama_${kode}).value,
+      aktif: document.getElementById(aktif_${kode}).checked ? 1 : 0,
+      jam_buka: document.getElementById(buka_${kode}).value,
+      jam_tutup: document.getElementById(tutup_${kode}).value,
+      hari_aktif: hari.join(',')
+    })});
+  alert('Tersimpan');
+}
+async function panggil(kode){
+  const r = await fetch(/api/admin/panggil/${kode}, {method:'POST'}); const d = await r.json();
+  alert(d.ok ? Dipanggil: ${kode}-${d.dipanggil} : d.message);
+}
+async function panggilUlang(kode){
+  const r = await fetch(/api/admin/panggil-ulang/${kode}, {method:'POST'}); const d = await r.json();
+  alert(d.ok ? Dipanggil ulang: ${kode}-${d.dipanggil} : 'Belum ada yang dipanggil');
+}
+async function bersihkan(kode){ await fetch(/api/admin/bersihkan/${kode}, {method:'POST'}); alert('Antrian lewat 3 dihanguskan'); }
+async function loadQR(){
+  const r = await fetch('/api/admin/qr?url=' + encodeURIComponent(document.getElementById('urlQR').value));
+  const d = await r.json();
+  document.getElementById('qrBox').innerHTML = <img src="${d.qr}" style="width:250px">;
+}
+fetch('/api/admin/layanan').then(r => { if (r.ok){ document.getElementById('loginBox').style.display='none'; loadDashboard(); } });
+</script>
+</body>
+</html>
