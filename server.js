@@ -45,7 +45,7 @@ function cekBuka(l) {
   const hari = new Date().getDay();
   if (!l.hari_aktif.includes(hari)) return { buka: false, alasan: 'Hari ini tutup' };
   const t = nowTime();
- f (t < l.jam_buka) return { buka: false, alasan: Buka jam ${l.jam_buka} };
+ if (t < l.jam_buka) return { buka: false, alasan: Buka jam ${l.jam_buka} };
   if (t > l.jam_tutup) return { buka: false, alasan: Sudah tutup (${l.jam_tutup}) };
   return { buka: true };
 }
