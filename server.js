@@ -211,7 +211,7 @@ app.get('/api/admin/qr', requireAdmin, async (req, res) => {
   res.json({ qr });
 });
 
-const PORT = process.env.PORT || 3000;
+
 // ============ API ADMIN ============
 app.post('/api/admin/login', (req, res) => {
   const db = loadDB(); const { user, pass } = req.body;
@@ -272,4 +272,5 @@ app.get('/api/admin/qr', requireAdmin, async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => console.log('Server jalan di port ' + PORT));
+
  
