@@ -114,11 +114,7 @@ app.get('/api/status/:kode/:nomor', (req, res) => {
 
   res.json({
     nomor, kode, status: status_text, sedang_berjalan: dipanggil, selisih,
-    pesan: selisih > 3 ? 'Antrian Anda sudah hangus (lewat 3 antrian)' :
-           selisih === 1 ? 'Anda adalah antrian berikutnya!' :
-           selisih === 0 ? 'SEKARANG GILIRAN ANDA!' :
-           Sisa ${selisih - 1} antrian lagi
-  });
+    pesan: selisih > 3 ? 'Antrian hangus (lewat 3)' : selisih === 1 ? 'Anda berikutnya!' : selisih === 0 ? 'SEKARANG GILIRAN ANDA!' : 'Sisa ' + (selisih - 1) + ' antrian lagi'
 });
 
 app.get('/api/display', (req, res) => {
