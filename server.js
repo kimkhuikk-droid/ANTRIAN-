@@ -269,7 +269,12 @@ app.get('/api/admin/qr', requireAdmin, async (req, res) => {
   const qr = await QRCode.toDataURL(req.query.url || 'http://localhost:3000/');
   res.json({ qr });
 });
-
+function requireAdmin(req, res, next) {
+  const db = loadDB();
+  if (!req.cookies.token || !db.sesi.includes(req.cookies.token))
+    return res.status(401).json({ error: 'Belum login' });
+  next();
+}
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => console.log('Server jalan di port ' + PORT));
 
