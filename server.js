@@ -212,5 +212,64 @@ app.get('/api/admin/qr', requireAdmin, async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
+// ============ API ADMIN ============
+app.post('/api/admin/login', (req, res) => {
+  const db = loadDB(); const { user, pass } = req.body;
+  if (user !== db.config.admin_user || pass !== db.config.admin_pass)
+    return res.status(401).json({ error: 'Salah login' });
+  const token = Math.random().toString(36).slice(2) + Date.now();
+  db.sesi.push(token); saveDB(db);
+  res.cookie('token', token, { httpOnly: true });
+  res.json({ ok: true });
+});
+
+app.post('/api/admin/logout', (req, res) => {
+  const db = loadDB();
+  db.sesi = db.sesi.filter(t => t !== req.cookies.token); saveDB(db);
+  res.clearCookie('token'); res.json({ ok: true });
+});
+
+app.get('/api/admin/layanan', requireAdmin, (req, res) => {
+  res.json(Object.values(loadDB().layanan));
+});
+
+app.put('/api/admin/layanan/:kode', requireAdmin, (req, res) => {
+  const db = loadDB(); const l = db.layanan[req.params.kode];
+  if (!l) return res.status(404).json({ error: 'Tidak ada' });
+  const { nama, aktif, jam_buka, jam_tutup, hari_aktif } = req.body;
+  Object.assign(l, { nama, aktif: !!aktif, jam_buka, jam_tutup, hari_aktif: hari_aktif.split(',').map(Number) });
+  saveDB(db); res.json({ ok: true });
+});
+
+app.post('/api/admin/panggil/:kode', requireAdmin, (req, res) => {
+  const db = loadDB(); const tgl = today(); const kode = req.params.kode;
+  db.antrian.forEach(a => { if (a.kode_layanan === kode && a.tanggal === tgl && a.status === 'dipanggil') a.status = 'selesai'; });
+  const next = db.antrian.filter(a => a.kode_layanan === kode && a.tanggal === tgl && a.status === 'menunggu').sort((a, b) => a.nomor - b.nomor)[0];
+  if (!next) { saveDB(db); return res.json({ ok: false, message: 'Tidak ada antrian menunggu' }); }
+  next.status = 'dipanggil'; next.waktu_panggil = nowTime(); saveDB(db);
+  res.json({ ok: true, dipanggil: next.nomor });
+});
+
+app.post('/api/admin/panggil-ulang/:kode', requireAdmin, (req, res) => {
+  const db = loadDB(); const tgl = today();
+  const h = db.antrian.filter(a => a.kode_layanan === req.params.kode && a.tanggal === tgl && a.status === 'dipanggil');
+  if (!h.length) return res.json({ ok: false });
+  res.json({ ok: true, dipanggil: Math.max(...h.map(a => a.nomor)) });
+});
+
+app.post('/api/admin/bersihkan/:kode', requireAdmin, (req, res) => {
+  const db = loadDB(); const tgl = today(); const kode = req.params.kode;
+  const h = db.antrian.filter(a => a.kode_layanan === kode && a.tanggal === tgl);
+  const dipanggil = Math.max(0, ...h.filter(a => a.status === 'dipanggil' || a.status === 'selesai').map(a => a.nomor));
+  h.forEach(a => { if (a.status === 'menunggu' && a.nomor < dipanggil - 2) a.status = 'hangus'; });
+  saveDB(db); res.json({ ok: true });
+});
+
+app.get('/api/admin/qr', requireAdmin, async (req, res) => {
+  const qr = await QRCode.toDataURL(req.query.url || 'http://localhost:3000/');
+  res.json({ qr });
+});
+
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => console.log('Server jalan di port ' + PORT));
  
