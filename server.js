@@ -98,7 +98,6 @@ app.post('/api/admin/login', (req, res) => {
   const token = Math.random().toString(36).slice(2) + Date.now();
   db.sesi.push(token); saveDB(db);
   res.cookie('token', token, { httpOnly: true });
-  res.json({ ok: true });
 });
 
 app.post('/api/admin/logout', (req, res) => {
