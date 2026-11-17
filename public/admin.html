@@ -26,7 +26,7 @@
   <div class="grid" id="layananGrid"></div>
   <div class="card">
     <h3>📱 QR Code Nasabah</h3>
-    <p>Isi URL aplikasi Anda (URL Glitch/Render):</p>
+    <p>Isi URL aplikasi Anda (URL Render):</p>
     <input id="urlQR" value="" onchange="loadQR()">
     <div id="qrBox" style="text-align:center;margin-top:12px"></div>
   </div>
@@ -38,7 +38,7 @@ async function login(){
   const r = await fetch('/api/admin/login', {method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({user: document.getElementById('user').value, pass: document.getElementById('pass').value})});
   if (r.ok){ document.getElementById('loginBox').style.display='none'; loadDashboard(); }
-  else alert('Login gagal');
+  else alert('Login gagal, cek username/password');
 }
 async function logout(){ await fetch('/api/admin/logout', {method:'POST'}); location.reload(); }
 async function loadDashboard(){
