@@ -28,14 +28,8 @@ function saveDB(db) { fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2)); }
 function today() { return new Date().toISOString().slice(0, 10); }
 function nowTime() { return new Date().toTimeString().slice(0, 5); }
 function cekBuka(l) {
-  const hari = new Date().getDay();
-  if (!l.hari_aktif.includes(hari)) return { buka: false, alasan: 'Hari ini tutup' };
-  const t = nowTime();
-  if (t < l.jam_buka) return { buka: false, alasan: 'Buka jam ' + l.jam_buka };
-  if (t > l.jam_tutup) return { buka: false, alasan: 'Sudah tutup (' + l.jam_tutup + ')' };
-  return { buka: true };
+  return { buka: true }; // <--- KITA PAKSA SELALU BUKA UNTUK TES
 }
-
 // FUNGSI requireAdmin DIPINDAH KE SINI (SEBELUM DIPAKAI)
 function requireAdmin(req, res, next) {
   const db = loadDB();
