@@ -73,7 +73,7 @@ async function loadDashboard(){
 }
 async function simpan(kode){
   const hari = [];
-  for (let i=0;i<7;i++) if (document.getElementById(hari_${kode}_${i}).checked) hari.push(i);
+for (let i=0;i<7;i++) if (document.getElementById(hari_${kode}_${i}).checked) hari.push(i);
   await fetch(/api/admin/layanan/${kode}, {method:'PUT', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({
       nama: document.getElementById(nama_${kode}).value,
